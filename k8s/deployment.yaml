@@ -17,15 +17,21 @@ spec:
       # If your image is in a private registry, add an imagePullSecrets section here
       containers:
         - name: shorten
-          image: ghcr.io/<OWNER>/<REPO>:<TAG>  # TODO: replace with your image (e.g. ghcr.io/yourname/shorten_url:latest)
+          image: ${IMAGE}  # TODO: replace with your image (e.g. ghcr.io/yourname/shorten_url:latest)
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
           env:
             - name: REDIS_ADDR
-              value: "redis:6379"
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: REDIS_ADDR
             - name: REDIS_PASSWORD
-              value: "" # set via secret in production; leave empty if Redis has no password
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: REDIS_PASSWORD
             - name: BASE_URL
               value: "http://example.com"  # used for building full short URLs; change to your domain if needed
           readinessProbe:
