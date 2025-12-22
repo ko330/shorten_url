@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shorten
+  labels:
+    app: shorten
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: shorten
+  template:
+    metadata:
+      labels:
+        app: shorten
+    spec:
+      # If your image is in a private registry, add an imagePullSecrets section here
+      containers:
+        - name: shorten
+          image: ${IMAGE}  # TODO: replace with your image (e.g. ghcr.io/yourname/shorten_url:latest)
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: REDIS_ADDR
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: REDIS_ADDR
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: REDIS_PASSWORD
+            - name: BASE_URL
+              value: "http://example.com"  # used for building full short URLs; change to your domain if needed
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shorten
+  labels:
+    app: shorten
+spec:
+  type: ClusterIP
+  selector:
+    app: shorten
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http

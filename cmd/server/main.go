@@ -17,11 +17,15 @@ import (
 )
 
 func main() {
-	port := getEnv("PORT", "8080")
 	redisAddr := getEnv("REDIS_ADDR", "localhost:6379")
-	baseURL := getEnv("BASE_URL", "http://localhost:"+port)
+	baseURL := getEnv("BASE_URL", "http://localhost:8080")
 
-	rdb := redis.NewClient(&redis.Options{Addr: redisAddr})
+	// Read Redis password from env; empty means no auth
+	redisPassword := os.Getenv("REDIS_PASSWORD")
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: redisPassword,
+	})
 	ctx := context.Background()
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.Fatalf("failed to connect to redis at %s: %v", redisAddr, err)
@@ -36,7 +40,7 @@ func main() {
 	r.GET("/:id", h.Resolve)
 
 	srv := &http.Server{
-		Addr:    ":" + port,
+		Addr:    ":8080",
 		Handler: r,
 	}
 
