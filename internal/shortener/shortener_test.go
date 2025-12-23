@@ -28,13 +28,12 @@ func TestShortenResolve(t *testing.T) {
 	svc := New(rdb, "http://localhost:8080")
 
 	ctx := context.Background()
-	id, shortURL, err := svc.Shorten(ctx, "https://example.com/abc")
+	shortURL, err := svc.Shorten(ctx, "https://example.com/abc")
 	require.NoError(t, err)
-	require.NotEmpty(t, id)
-	require.LessOrEqual(t, len(id), 6)
-	require.Contains(t, shortURL, id)
-
-	orig, err := svc.Resolve(ctx, id)
+	require.NotEmpty(t, shortURL)
+	// Shorten returns a full short URL (base + id), it should not contain the original URL
+	require.Contains(t, shortURL, "http://localhost:8080/")
+	orig, err := svc.Resolve(ctx, shortURL[len("http://localhost:8080/"):])
 	require.NoError(t, err)
 	require.Equal(t, "https://example.com/abc", orig)
 }
@@ -48,16 +47,16 @@ func TestDeterministicShorten(t *testing.T) {
 	svc := New(rdb, "http://localhost:8080")
 
 	ctx := context.Background()
-	id1, _, err := svc.Shorten(ctx, "https://example.com/foo")
+	shortURL1, err := svc.Shorten(ctx, "https://example.com/foo")
 	require.NoError(t, err)
-	require.LessOrEqual(t, len(id1), 6)
-	id2, _, err := svc.Shorten(ctx, "https://example.com/foo")
+	shortURL2, err := svc.Shorten(ctx, "https://example.com/foo")
 	require.NoError(t, err)
 
+	// Should be deterministic: same input -> same short URL
+	require.Equal(t, shortURL1, shortURL2)
+
+	id1 := shortURL1[len("http://localhost:8080/"):]
 	orig1, err := svc.Resolve(ctx, id1)
 	require.NoError(t, err)
-	orig2, err := svc.Resolve(ctx, id2)
-	require.NoError(t, err)
 	require.Equal(t, "https://example.com/foo", orig1)
-	require.Equal(t, "https://example.com/foo", orig2)
 }
