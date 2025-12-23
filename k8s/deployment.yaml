@@ -33,7 +33,7 @@ spec:
                   name: redis-secret
                   key: REDIS_PASSWORD
             - name: BASE_URL
-              value: "http://example.com"  # used for building full short URLs; change to your domain if needed
+              value: "https://decades-agreements-tiger-region.trycloudflare.com"  # from cloudflare tunnel
           readinessProbe:
             httpGet:
               path: /health

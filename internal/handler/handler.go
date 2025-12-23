@@ -22,9 +22,7 @@ type shortenRequest struct {
 }
 
 type shortenResponse struct {
-	ID       string `json:"id"`
 	ShortURL string `json:"short_url"`
-	URL      string `json:"url"`
 }
 
 func (h *Handler) Shorten(c *gin.Context) {
@@ -34,13 +32,13 @@ func (h *Handler) Shorten(c *gin.Context) {
 		return
 	}
 
-	id, shortURL, err := h.svc.Shorten(context.Background(), req.URL)
+	shortURL, err := h.svc.Shorten(context.Background(), req.URL)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, shortenResponse{ID: id, ShortURL: shortURL, URL: req.URL})
+	c.JSON(http.StatusCreated, shortenResponse{ShortURL: shortURL})
 }
 
 func (h *Handler) Resolve(c *gin.Context) {

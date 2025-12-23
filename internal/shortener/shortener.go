@@ -30,16 +30,16 @@ func New(rdb *redis.Client, baseURL string) *Shortener {
 // Shorten stores the original URL and returns the short id derived from the URL's hash.
 // It takes the first 48 bits of SHA-256(URL [+ attempt]) and base62-encodes them. On collisions
 // (when different URL maps to same id) the function will retry with a small salt.
-func (s *Shortener) Shorten(ctx context.Context, original string) (string, string, error) {
+func (s *Shortener) Shorten(ctx context.Context, original string) (string, error) {
 	u, err := url.ParseRequestURI(original)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
-		return "", "", errors.New("invalid url: must include http:// or https://")
+		return "", errors.New("invalid url: must include http:// or https://")
 	}
 
 	// Check reverse mapping to avoid duplicates
 	revKey := "url:" + original
 	if id, err := s.rdb.Get(ctx, revKey).Result(); err == nil {
-		return id, s.baseURL + "/" + id, nil
+		return s.baseURL + "/" + id, nil
 	}
 
 	// Generate id from URL hash (take first 48 bits). If collision occurs with different URL,
@@ -62,18 +62,18 @@ func (s *Shortener) Shorten(ctx context.Context, original string) (string, strin
 			// collision with existing short id -> try next attempt
 			continue
 		} else if err != redis.Nil {
-			return "", "", err
+			return "", err
 		}
 
 		// key doesn't exist; store it
 		if err := s.rdb.Set(ctx, key, original, 0).Err(); err != nil {
-			return "", "", err
+			return "", err
 		}
 		_ = s.rdb.Set(ctx, revKey, id, 0).Err()
-		return id, s.baseURL + "/" + id, nil
+		return s.baseURL + "/" + id, nil
 	}
 
-	return "", "", errors.New("failed to generate unique id after retries")
+	return "", errors.New("failed to generate unique id after retries")
 }
 
 func (s *Shortener) Resolve(ctx context.Context, id string) (string, error) {
