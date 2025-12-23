@@ -12,6 +12,7 @@ import (
 	"shorten_url/internal/handler"
 	"shorten_url/internal/shortener"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 )
@@ -35,6 +36,7 @@ func main() {
 	h := handler.New(svc)
 
 	r := gin.Default()
+	r.Use(cors.Default())
 	r.GET("/health", h.Health)
 	r.POST("/api/shorten", h.Shorten)
 	r.GET("/:id", h.Resolve)
