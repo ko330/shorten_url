@@ -33,7 +33,7 @@ spec:
                   name: redis-secret
                   key: REDIS_PASSWORD
             - name: BASE_URL
-              value: "https://decades-agreements-tiger-region.trycloudflare.com"  # from cloudflare tunnel
+              value: "https://brakes-deals-manuals-moisture.trycloudflare.com/"  # from cloudflare tunnel
           readinessProbe:
             httpGet:
               path: /health
